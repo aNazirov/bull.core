@@ -3,16 +3,9 @@
     "id": 1,
     "name": "Admin",
     "email": "admin@example.com",
+    "phone": "+998990000001",
     "roleId": 1,
     "password": "$2a$12$UyrWGLmJAzTZMMs2Kz1YPeCsFglgW6yd6Epj5vWHLhu/Or0WZpSMu",
     "ps": "k5Hx1Tl9e1G$"
-  },
-  {
-    "id": 2,
-    "name": "Moderator",
-    "email": "moderator@example.com",
-    "roleId": 2,
-    "password": "$2a$12$sByXlr1NIU/7CshcQAdD2.8AhUV6H.WIn564AXKyYOkmxWj06qcDe",
-    "ps": "K2XRv3E589$F"
   }
 ]

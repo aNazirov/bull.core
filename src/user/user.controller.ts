@@ -6,30 +6,33 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { JWTPayload } from 'src/auth/dto/auth.dto';
 import { Roles } from 'src/common/decorators/roles.decorator';
-import { JWTPayloadData } from 'src/common/guards/jwt.guard';
+import { JwtAuthGuard, JWTPayloadData } from 'src/common/guards/jwt.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Enums } from 'src/utils';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import { UserService } from './user.service';
 
 @Controller('user')
+@UseGuards(JwtAuthGuard)
 export class UserController {
+  chainService: any;
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @Roles(Enums.RoleType.Admin, Enums.RoleType.Moderator, Enums.RoleType.User)
+  @Roles(Enums.RoleType.Admin, Enums.RoleType.User)
   @UseGuards(RolesGuard)
   create(@Body() params: CreateUserDto, @JWTPayloadData() payload: JWTPayload) {
     return this.userService.create(params, payload);
   }
 
   @Get()
-  findAll() {
-    return this.userService.findAll();
+  findAll(@Query('skip') skip?: string) {
+    return this.userService.findAll(+skip);
   }
 
   @Get('token')

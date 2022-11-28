@@ -1,6 +1,6 @@
 import { OmitType } from '@nestjs/mapped-types';
-import { User } from '@prisma/client';
 import { IsEmail, IsNotEmptyObject, IsString } from 'class-validator';
+import { User } from 'src/user/entities/user.entity';
 
 export class RegistrationDto {
   @IsString()
@@ -10,10 +10,20 @@ export class RegistrationDto {
   email: string;
 
   @IsString()
+  phone: string;
+
+  @IsString()
   password: string;
 }
 
-export class LoginDto extends OmitType(RegistrationDto, ['name'] as const) {}
+export class LoginDto extends OmitType(RegistrationDto, [
+  'name',
+  'email',
+  'phone',
+] as const) {
+  @IsString()
+  login: string;
+}
 
 export class AuthenticatedUser {
   @IsNotEmptyObject()
@@ -26,5 +36,5 @@ export class AuthenticatedUser {
 export class JWTPayload {
   userId: number;
   email: string;
-  role: { id: number; title: string };
+  role: { id: number };
 }

@@ -1,19 +1,21 @@
 import { PrismaService } from '@libs/prisma';
 import { Injectable, StreamableFile } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { Prisma } from '@prisma/client';
 import { createReadStream } from 'fs';
 import { unlink } from 'fs/promises';
 import { ErrorHandler } from 'src/utils';
 
-export interface IFileMulter extends Express.Multer.File {}
-
 interface Args {
-  files: IFileMulter[];
+  files: Express.Multer.File[];
 }
 
 @Injectable()
 export class FileService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly config: ConfigService,
+  ) {}
 
   async fetchFile(name: string) {
     const file = await this.prisma.file.findUnique({ where: { name } });
@@ -23,7 +25,7 @@ export class FileService {
     return new StreamableFile(createReadStream(file.path));
   }
 
-  async uploadFile(file: IFileMulter) {
+  async uploadFile(file: Express.Multer.File) {
     if (Array.isArray(file)) {
       file = file[0];
     }
@@ -48,7 +50,7 @@ export class FileService {
           originalName: x.originalname,
           size: x.size,
           mimeType: x.mimetype,
-          url: `/file/${x.filename}`,
+          url: `${this.config.get('host')}/file/${x.filename}`,
           path: x.path,
         },
       });

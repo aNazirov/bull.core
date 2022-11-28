@@ -10,44 +10,66 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id                 Int            @id @default(autoincrement())
-  name               String
-  parent             User?          @relation(name: "ParentToChildren", fields: [parentId], references: [id])
-  parentId           Int?
-  subUsers           User[]         @relation("ParentToChildren")
-  contact            Contact        @relation(fields: [contactId], references: [id])
-  contactId          Int
-  role               Role           @relation(fields: [roleId], references: [id])
-  roleId             Int
-  balance            Float          @default(0)
-  password           String
-  payments           Payment[]
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @default(now()) @updatedAt
+enum BannerPosition {
+  full
+  right
+  left
 }
 
-model Contact {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  ///HideField()
-  users     User[]
+enum ContextPriority {
+  urgent
+  medium
+  low
+}
+
+model User {
+  id       Int    @id @default(autoincrement())
+  name     String
+  email    String
+  phone    String
+  balance  Float  @default(0)
+  password String
+
+  roleId   Int
+  avatarId Int? @unique
+
+  role   Role  @relation(fields: [roleId], references: [id])
+  avatar File? @relation(fields: [avatarId], references: [id])
+
+  contexts Context[]
+  chains   Chain[]
+  banners  Banner[]
+  payments Payment[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 
-  @@index([email], type: Hash)
 }
 
 model Role {
-  id        Int      @id @default(autoincrement())
-  title     String   @unique
+  id    Int    @id @default(autoincrement())
+  title String @unique
+
   ///HideField()
-  users     User[]
+  users User[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 }
 
 model PaymentType {
+  id    Int    @id @default(autoincrement())
+  title String @unique
+
+  ///HideField()
+  payments Payment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+}
+
+model PaymentStatusType {
   id        Int       @id @default(autoincrement())
   title     String    @unique
   ///HideField()
@@ -58,27 +80,133 @@ model PaymentType {
 }
 
 model Payment {
-  id        Int         @id @default(autoincrement())
-  type      PaymentType @relation(fields: [typeId], references: [id])
-  typeId    Int
-  user      User        @relation(fields: [userId], references: [id])
-  userId    Int
-  summa     Float
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @default(now()) @updatedAt
+  id    Int   @id @default(autoincrement())
+  summa Float
+
+  typeId   Int
+  statusId Int
+  userId   Int
+
+  type   PaymentType       @relation(fields: [typeId], references: [id])
+  status PaymentStatusType @relation(fields: [statusId], references: [id])
+  user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model ContextType {
+  id    Int    @id @default(autoincrement())
+  name  String
+  price Int
+
+  priority ContextPriority
+
+  ///@HideField()
+  contexts Context[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+}
+
+model Context {
+  id          Int      @id @default(autoincrement())
+  url         String
+  title       String
+  activeAt    DateTime
+  description String?
+
+  userId Int
+  typeId Int
+
+  user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type ContextType @relation(fields: [typeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model ChainType {
+  id     Int     @id @default(autoincrement())
+  price  Int
+  active Boolean
+
+  ///@HideField()
+  chains Chain[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+}
+
+model Chain {
+  id       Int      @id @default(autoincrement())
+  url      String
+  title    String
+  activeAt DateTime
+
+  userId Int
+  typeId Int
+
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type ChainType @relation(fields: [typeId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model BannerType {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  size  String
+  price Int
+  index Int?
+
+  position BannerPosition
+
+  ///@HideField()
+  banners Banner[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model Banner {
+  id       Int      @id @default(autoincrement())
+  url      String
+  activeAt DateTime
+
+  typeId   Int
+  userId   Int
+  posterId Int @unique()
+
+  type   BannerType @relation(fields: [typeId], references: [id])
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  poster File       @relation(fields: [posterId], references: [id])
+
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 }
 
 model File {
-  id              Int        @id @default(autoincrement())
-  name            String     @unique
-  originalName    String
-  size            Int
-  mimeType        String
-  url             String
-  path            String
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @default(now()) @updatedAt
+  id           Int    @id @default(autoincrement())
+  name         String @unique
+  originalName String
+  size         Int
+  mimeType     String
+  url          String
+  path         String
 
+  ///@HideField()
+  banner Banner?
+  ///@HideField()
+  user   User?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
 
   @@index([name], type: Hash)
 }

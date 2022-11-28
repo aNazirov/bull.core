@@ -1,6 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import MeiliSearch from 'meilisearch';
-import { appConfiguration } from '../config/config';
 
 interface JSONRoleType {
   id: number;
@@ -11,11 +9,12 @@ interface JSONUserType {
   id: number;
   name: string;
   email: string;
+  phone: string;
   roleId: number;
   password: string;
 }
 
-interface JSONStatuseType {
+interface JSONStatusesType {
   title: string;
   data: [{ id: number; title: string }];
 }
@@ -26,9 +25,9 @@ const rolesJSON = require('./seed_data/roles.json') as JSONRoleType[];
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const usersJSON = require('./seed_data/users.json') as JSONUserType[];
 
-// eslint-disable-next-line @typescript-eslint/no-var-requires
 const statusesTypesJSON =
-  require('./seed_data/statuses&types.json') as JSONStatuseType[];
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  require('./seed_data/types&statuses.json') as JSONStatusesType[];
 
 const prisma = new PrismaClient();
 
@@ -40,15 +39,12 @@ async function main() {
   );
 
   await Promise.all(
-    usersJSON.map(({ name, email, roleId, password }) =>
+    usersJSON.map(({ name, email, phone, roleId, password }) =>
       prisma.user.create({
         data: {
           name,
-          contact: {
-            create: {
-              email,
-            },
-          },
+          email,
+          phone,
           role: { connect: { id: roleId } },
           password,
         },
@@ -70,56 +66,6 @@ async function main() {
       ),
     );
   }
-
-  const client = new MeiliSearch({
-    host: appConfiguration().meili.host,
-    apiKey: appConfiguration().meili.key,
-  });
-
-  const genresIndex = client.index('genres');
-  const categoriesIndex = client.index('categories');
-  const countriesIndex = client.index('counries');
-  const producersIndex = client.index('producers');
-  const actersIndex = client.index('acters');
-  const moviesIndex = client.index('movies');
-
-  // await genresIndex.deleteAllDocuments();
-  // await categoriesIndex.deleteAllDocuments();
-  // await countriesIndex.deleteAllDocuments();
-  // await producersIndex.deleteAllDocuments();
-  // await actersIndex.deleteAllDocuments();
-  // await moviesIndex.deleteAllDocuments();
-
-  await genresIndex.updateSettings({
-    searchableAttributes: ['title'],
-    filterableAttributes: ['id'],
-  });
-
-  await categoriesIndex.updateSettings({
-    searchableAttributes: ['title'],
-    filterableAttributes: ['id'],
-  });
-
-  await countriesIndex.updateSettings({
-    searchableAttributes: ['title'],
-    filterableAttributes: ['id'],
-  });
-
-  await producersIndex.updateSettings({
-    searchableAttributes: ['name'],
-    filterableAttributes: ['id'],
-  });
-
-  await actersIndex.updateSettings({
-    searchableAttributes: ['name'],
-    filterableAttributes: ['id'],
-  });
-
-  await moviesIndex.updateSettings({
-    searchableAttributes: ['title'],
-    filterableAttributes: ['year', 'genres', 'acters', 'countries'],
-    sortableAttributes: ['id', 'title', 'imdb', 'rating', 'createdAt'],
-  });
 }
 
 main()

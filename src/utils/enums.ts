@@ -1,11 +1,19 @@
 export enum RoleType {
   Admin = 'Admin',
-  Moderator = 'Moderator',
   User = 'User',
 }
 
 export enum RoleTypeIndex {
   Admin = 1,
-  Moderator = 2,
   User = 3,
+}
+
+export enum PaymentType {
+  Payze = 1,
+}
+
+export enum PaymentStatusType {
+  Pending = 1,
+  Success,
+  Fail,
 }

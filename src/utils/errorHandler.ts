@@ -1,4 +1,4 @@
-import { HttpException, Logger } from "@nestjs/common";
+import { HttpException, Logger } from '@nestjs/common';
 
 export const ErrorHandler = (
   code?: number,
@@ -10,7 +10,7 @@ export const ErrorHandler = (
         message: string;
         next_link?: string;
         decode_pass?: string;
-      }
+      },
 ) => {
   Logger.error(error || message);
 
@@ -33,41 +33,41 @@ export const ErrorHandler = (
 //400
 export class ClientException extends HttpException {
   constructor(message?) {
-    super(message || "CLIENT SIDE ERROR", 400);
+    super(message || 'CLIENT SIDE ERROR', 400);
   }
 }
 
 //401
 export class AuthenticationException extends HttpException {
   constructor(message?) {
-    super(message || "NOT AUTHENTICATION", 401);
+    super(message || 'NOT AUTHENTICATION', 401);
   }
 }
 
 //403
 export class NotAllowedException extends HttpException {
   constructor(message?) {
-    super(message || "NOT AUTORIZATION", 403);
+    super(message || 'NOT AUTORIZATION', 403);
   }
 }
 
 //404
 export class NotFoundException extends HttpException {
   constructor(message?) {
-    super(message || "NOT FOUND", 404);
+    super(message || 'NOT FOUND', 404);
   }
 }
 
 //409
 export class ClientInputException extends HttpException {
   constructor(message?) {
-    super(message || "CONFLICT", 409);
+    super(message || 'CONFLICT', 409);
   }
 }
 
 //500
 export class ServerException extends HttpException {
   constructor(message?) {
-    super(message || "SERVER SIDE ERROR", 500);
+    super(message || 'SERVER SIDE ERROR', 500);
   }
 }

@@ -2,7 +2,6 @@ import {
   Controller,
   Delete,
   Get,
-  HostParam,
   Param,
   Post,
   StreamableFile,
@@ -16,7 +15,7 @@ import { Roles } from 'src/common/decorators/roles.decorator';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guard';
 import { RolesGuard } from 'src/common/guards/roles.guard';
 import { Enums, multerStorage } from 'src/utils';
-import { FileService, IFileMulter } from './file.service';
+import { FileService } from './file.service';
 
 @Controller('file')
 @UseGuards(JwtAuthGuard)
@@ -29,26 +28,26 @@ export class FileController {
   }
 
   @Post('upload')
-  @Roles(Enums.RoleType.Admin, Enums.RoleType.Moderator)
+  @Roles(Enums.RoleType.Admin)
   @UseGuards(RolesGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: multerStorage,
     }),
   )
-  uploadSingle(@UploadedFile() file: IFileMulter) {
+  uploadSingle(@UploadedFile() file: Express.Multer.File) {
     return this.fileService.uploadFile(file);
   }
 
   @Post('upload-many')
-  @Roles(Enums.RoleType.Admin, Enums.RoleType.Moderator)
+  @Roles(Enums.RoleType.Admin)
   @UseGuards(RolesGuard)
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       storage: multerStorage,
     }),
   )
-  uploadMultiple(@UploadedFiles() files: IFileMulter[], @HostParam() host) {
+  uploadMultiple(@UploadedFiles() files: Express.Multer.File[]) {
     return this.fileService.uploadFiles({ files });
   }
 

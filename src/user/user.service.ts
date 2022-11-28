@@ -3,49 +3,45 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import { JWTPayload } from 'src/auth/dto/auth.dto';
+import { FileService } from 'src/file/file.service';
 import { ErrorHandler } from 'src/utils';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 
-const getOne = {
+export const getOne = {
   id: true,
   name: true,
+  email: true,
+  phone: true,
   role: {
     select: {
       id: true,
       title: true,
     },
   },
-  parent: {
+  avatar: {
     select: {
       id: true,
       name: true,
+      url: true,
     },
   },
-  subUsers: {
-    select: {
-      id: true,
-      name: true,
-      ageRemark: true,
-      contact: { select: { email: true } },
-    },
-  },
-  contact: { select: { email: true } },
   balance: true,
-  ageRemark: true,
-  lastSubscription: true,
 };
 
 @Injectable()
 export class UserService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly file: FileService,
+  ) {}
 
   async create(params: CreateUserDto, payload: JWTPayload): Promise<User> {
-    const contact = await this.prisma.contact.findUnique({
+    const candidate = await this.prisma.user.findFirst({
       where: { email: params.email },
     });
 
-    if (contact)
+    if (candidate)
       return ErrorHandler(409, null, `${params.email} is already in use`);
 
     if (payload.role.id > params.roleId) {
@@ -61,15 +57,13 @@ export class UserService {
         data: {
           name: params.name.trim(),
           role: { connect: { id: params.roleId } },
-          parent: { connect: { id: payload.userId } },
           balance: params.balance,
-          ageRemark: params.ageRemark,
-          contact: {
-            create: {
-              email: params.email,
-            },
-          },
+          email: params.email,
+          phone: params.phone,
           password: await bcrypt.hash(params.password, 12),
+          ...(params.avatarId
+            ? { avatar: { connect: { id: params.avatarId } } }
+            : {}),
         },
         select: getOne,
       });
@@ -80,8 +74,16 @@ export class UserService {
     }
   }
 
-  async findAll() {
-    return `This action returns all user`;
+  async findAll(skip = 0) {
+    const [data, count] = await this.prisma.$transaction([
+      this.prisma.user.findMany({ skip }),
+      this.prisma.user.count(),
+    ]);
+
+    return {
+      count,
+      data,
+    };
   }
 
   async findByToken(id: number) {
@@ -95,7 +97,6 @@ export class UserService {
   ): Promise<User> {
     const candidate = await this.prisma.user.findUnique({
       where: { id },
-      include: { contact: { select: { email: true } } },
     });
 
     if (!candidate)
@@ -103,15 +104,26 @@ export class UserService {
 
     const data: Prisma.UserUpdateInput = {};
 
-    if (params.email && candidate.contact.email !== params.email) {
-      const contact = await this.prisma.contact.findUnique({
+    if (params.email && candidate.email !== params.email) {
+      const _candidate = await this.prisma.user.findFirst({
         where: { email: params.email },
       });
 
-      if (contact)
+      if (_candidate)
         return ErrorHandler(409, null, `${params.email} is already in use`);
 
-      data.contact = { connect: { email: params.email } };
+      data.email = params.email;
+    }
+
+    if (params.phone && candidate.phone !== params.phone) {
+      const _candidate = await this.prisma.user.findFirst({
+        where: { phone: params.phone },
+      });
+
+      if (_candidate)
+        return ErrorHandler(409, null, `${params.phone} is already in use`);
+
+      data.phone = params.phone;
     }
 
     if (params.roleId && candidate.roleId !== params.roleId) {
@@ -126,16 +138,19 @@ export class UserService {
       data.role = { connect: { id: params.roleId } };
     }
 
+    if (params.avatarId && candidate.avatarId !== params.avatarId) {
+      data.avatar = { connect: { id: params.avatarId } };
+    }
+
     if (params.name.trim() && candidate.name !== params.name.trim()) {
       data.name = params.name.trim();
     }
 
-    if (params.balance && candidate.balance !== params.balance) {
+    if (
+      ![null, undefined].includes(params.balance) &&
+      candidate.balance !== params.balance
+    ) {
       data.balance = params.balance;
-    }
-
-    if (params.ageRemark && candidate.ageRemark !== params.ageRemark) {
-      data.ageRemark = params.ageRemark;
     }
 
     if (params.password) {
@@ -151,6 +166,10 @@ export class UserService {
         select: getOne,
       });
 
+      if (user.avatar?.id && candidate.avatarId !== user.avatar?.id) {
+        await this.file.delete({ id: user.avatar.id });
+      }
+
       return user;
     } catch (e) {
       return ErrorHandler(500, null, e);
@@ -160,6 +179,10 @@ export class UserService {
   async remove(id: number) {
     try {
       const user = await this.prisma.user.delete({ where: { id } });
+
+      if (user.avatarId) {
+        await this.file.delete({ id: user.avatarId });
+      }
 
       return { status: 200, message: 'Success' };
     } catch (e) {
