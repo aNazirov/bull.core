@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client';
 import { JWTPayload } from 'src/auth/dto/auth.dto';
 import { UserService } from 'src/user/user.service';
 import { Enums, ErrorHandler } from 'src/utils';
-import { RoleTypeIndex } from 'src/utils/enums';
+import { RoleType } from 'src/utils/enums';
 import {
   CreatePaymentDto,
   FilterPaymentParams,
@@ -100,7 +100,7 @@ export class PaymentService {
       where.statusId = params.statusId;
     }
 
-    if (payload.role.id === RoleTypeIndex.User) {
+    if (payload.role.id === RoleType.User) {
       where.userId = payload.userId;
     }
 
