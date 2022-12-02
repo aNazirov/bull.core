@@ -74,9 +74,16 @@ export class UserService {
     }
   }
 
-  async findAll(skip = 0) {
+  async findAll(skip = 0, payload: JWTPayload) {
     const [data, count] = await this.prisma.$transaction([
-      this.prisma.user.findMany({ skip }),
+      this.prisma.user.findMany({
+        skip,
+        where: {
+          roleId: {
+            gt: payload.role.id,
+          },
+        },
+      }),
       this.prisma.user.count(),
     ]);
 
@@ -87,6 +94,10 @@ export class UserService {
   }
 
   async findByToken(id: number) {
+    return this.prisma.user.findUnique({ where: { id }, select: getOne });
+  }
+
+  async findOne(id: number) {
     return this.prisma.user.findUnique({ where: { id }, select: getOne });
   }
 

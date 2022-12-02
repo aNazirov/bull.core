@@ -24,15 +24,15 @@ export class UserController {
   constructor(private readonly userService: UserService) {}
 
   @Post()
-  @Roles(Enums.RoleType.Admin, Enums.RoleType.User)
+  @Roles(Enums.RoleType.Admin)
   @UseGuards(RolesGuard)
   create(@Body() params: CreateUserDto, @JWTPayloadData() payload: JWTPayload) {
     return this.userService.create(params, payload);
   }
 
   @Get()
-  findAll(@Query('skip') skip?: string) {
-    return this.userService.findAll(+skip);
+  findAll(@JWTPayloadData() payload: JWTPayload, @Query('skip') skip?: string) {
+    return this.userService.findAll(+skip, payload);
   }
 
   @Get('token')
@@ -40,8 +40,13 @@ export class UserController {
     return this.userService.findByToken(payload.userId);
   }
 
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.userService.findOne(+id);
+  }
+
   @Patch(':id')
-  @Roles(Enums.RoleType.Admin)
+  @Roles(Enums.RoleType.Admin, Enums.RoleType.User)
   @UseGuards(RolesGuard)
   update(
     @Param('id') id: string,

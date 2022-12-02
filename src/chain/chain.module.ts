@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { ChainService } from './chain.service';
 import { ChainController } from './chain.controller';
+import { ChainService } from './chain.service';
 
 @Module({
   controllers: [ChainController],
-  providers: [ChainService]
+  providers: [ChainService],
 })
 export class ChainModule {}

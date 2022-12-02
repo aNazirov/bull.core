@@ -1,14 +1,60 @@
 import { PrismaService } from '@libs/prisma';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import * as moment from 'moment';
+import { JWTPayload } from 'src/auth/dto/auth.dto';
 import { ErrorHandler } from 'src/utils';
-import { CreateChainDto, UpdateChainDto } from './dto/chain.dto';
+import {
+  CreateChainDto,
+  CreateChainTypeDto,
+  UpdateChainTypeDto,
+} from './dto/chain.dto';
 
 @Injectable()
 export class ChainService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(params: CreateChainDto) {
+  async create(params: CreateChainDto, payload: JWTPayload) {
+    const [user, type] = await this.prisma.$transaction([
+      this.prisma.user.findUnique({
+        where: { id: payload.userId },
+      }),
+      this.prisma.chainType.findFirst({
+        where: { active: true },
+      }),
+    ]);
+
+    const needToPay = type.price * params.days;
+
+    if (user.balance < needToPay) {
+      return ErrorHandler(400, null, 'Недостаточно средств');
+    }
+
+    try {
+      const chain = await this.prisma.chain.create({
+        data: {
+          url: params.url,
+          title: params.title,
+          type: { connect: { id: type.id } },
+          user: { connect: { id: user.id } },
+          activeAt: new Date(moment().add(params.days).format()),
+        },
+      });
+
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          balance: user.balance - needToPay,
+        },
+      });
+
+      return chain;
+    } catch (e) {
+      return ErrorHandler(500, e);
+    }
+  }
+
+  async createType(params: CreateChainTypeDto) {
     try {
       const chainType = await this.prisma.chainType.create({
         data: {
@@ -23,7 +69,7 @@ export class ChainService {
     }
   }
 
-  async findAll(skip = 0) {
+  async findAllType(skip = 0) {
     const [data, count] = await this.prisma.$transaction([
       this.prisma.chainType.findMany({ skip }),
       this.prisma.chainType.count(),
@@ -35,7 +81,29 @@ export class ChainService {
     };
   }
 
-  async update(id: number, params: UpdateChainDto) {
+  async findActiveType() {
+    const data = await this.prisma.chainType.findMany({
+      where: { active: true },
+    });
+
+    return {
+      data,
+    };
+  }
+
+  async findAll(skip = 0) {
+    const [data, count] = await this.prisma.$transaction([
+      this.prisma.chain.findMany({ skip }),
+      this.prisma.chain.count(),
+    ]);
+
+    return {
+      count,
+      data,
+    };
+  }
+
+  async update(id: number, params: UpdateChainTypeDto) {
     const candidate = await this.prisma.chainType.findUnique({
       where: { id },
     });

@@ -16,6 +16,14 @@ enum BannerPosition {
   left
 }
 
+enum BannerSize {
+  size_1600x200
+  size_728x90
+  size_1200x150
+  size_160x600
+  size_150x150
+}
+
 enum ContextPriority {
   urgent
   medium
@@ -91,6 +99,9 @@ model Payment {
   status PaymentStatusType @relation(fields: [statusId], references: [id])
   user   User              @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  m_operation_id       String?
+  m_operation_ps       String?
+  m_operation_pay_date DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -158,9 +169,9 @@ model Chain {
 }
 
 model BannerType {
-  id    Int    @id @default(autoincrement())
-  name  String @unique
-  size  String
+  id    Int        @id @default(autoincrement())
+  name  String     @unique
+  size  BannerSize
   price Int
   index Int?
 

@@ -11,7 +11,7 @@ async function bootstrap() {
   const configService = app.get<ConfigService<AppConfig>>(ConfigService);
   const MODE = configService.get<string>('mode');
 
-  const whitelist = [];
+  const whitelist = ['185.71.65.92', '185.71.65.189', '149.202.17.210'];
 
   if (MODE === 'DEV') {
     whitelist.push('http://localhost:3000');

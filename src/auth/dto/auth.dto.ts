@@ -1,6 +1,7 @@
 import { OmitType } from '@nestjs/mapped-types';
 import { IsEmail, IsNotEmptyObject, IsString } from 'class-validator';
 import { User } from 'src/user/entities/user.entity';
+import { Enums } from 'src/utils';
 
 export class RegistrationDto {
   @IsString()
@@ -36,5 +37,5 @@ export class AuthenticatedUser {
 export class JWTPayload {
   userId: number;
   email: string;
-  role: { id: number };
+  role: { id: Enums.RoleType };
 }

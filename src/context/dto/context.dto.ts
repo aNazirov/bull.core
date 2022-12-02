@@ -1,8 +1,27 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { ContextPriority } from '@prisma/client';
-import { IsNumber, IsString, Min } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateContextDto {
+  @IsString()
+  url: string;
+
+  @IsString()
+  title: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsNumber()
+  @Min(0)
+  days: number;
+
+  @IsNumber()
+  typeId: number;
+}
+
+export class CreateContextTypeDto {
   @IsString()
   name: string;
 
@@ -20,4 +39,4 @@ export class CreateContextDto {
   priority: ContextPriority;
 }
 
-export class UpdateContextDto extends PartialType(CreateContextDto) {}
+export class UpdateContextTypeDto extends PartialType(CreateContextTypeDto) {}

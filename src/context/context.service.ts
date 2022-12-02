@@ -1,14 +1,61 @@
 import { PrismaService } from '@libs/prisma';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
+import * as moment from 'moment';
+import { JWTPayload } from 'src/auth/dto/auth.dto';
 import { ErrorHandler } from 'src/utils';
-import { CreateContextDto, UpdateContextDto } from './dto/context.dto';
+import {
+  CreateContextDto,
+  CreateContextTypeDto,
+  UpdateContextTypeDto,
+} from './dto/context.dto';
 
 @Injectable()
 export class ContextService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(params: CreateContextDto) {
+  async create(params: CreateContextDto, payload: JWTPayload) {
+    const [user, type] = await this.prisma.$transaction([
+      this.prisma.user.findUnique({
+        where: { id: payload.userId },
+      }),
+      this.prisma.contextType.findUnique({
+        where: { id: params.typeId },
+      }),
+    ]);
+
+    const needToPay = type.price * params.days;
+
+    if (user.balance < needToPay) {
+      return ErrorHandler(400, null, 'Недостаточно средств');
+    }
+
+    try {
+      const chain = await this.prisma.context.create({
+        data: {
+          url: params.url,
+          title: params.title,
+          description: params.description,
+          type: { connect: { id: type.id } },
+          user: { connect: { id: user.id } },
+          activeAt: new Date(moment().add(params.days).format()),
+        },
+      });
+
+      this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          balance: user.balance - needToPay,
+        },
+      });
+
+      return chain;
+    } catch (e) {
+      return ErrorHandler(500, e);
+    }
+  }
+
+  async createType(params: CreateContextTypeDto) {
     try {
       const contextType = await this.prisma.contextType.create({
         data: {
@@ -24,7 +71,7 @@ export class ContextService {
     }
   }
 
-  async findAll(skip = 0) {
+  async findAllType(skip = 0) {
     const [data, count] = await this.prisma.$transaction([
       this.prisma.contextType.findMany({ skip }),
       this.prisma.contextType.count(),
@@ -36,7 +83,19 @@ export class ContextService {
     };
   }
 
-  async update(id: number, params: UpdateContextDto) {
+  async findAll(skip = 0) {
+    const [data, count] = await this.prisma.$transaction([
+      this.prisma.context.findMany({ skip }),
+      this.prisma.context.count(),
+    ]);
+
+    return {
+      count,
+      data,
+    };
+  }
+
+  async update(id: number, params: UpdateContextTypeDto) {
     const candidate = await this.prisma.contextType.findUnique({
       where: { id },
     });
