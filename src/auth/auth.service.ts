@@ -77,7 +77,7 @@ export class AuthService {
         email: params.email,
         phone: params.phone,
         password: await bcrypt.hash(params.password, 12),
-        role: { connect: { title: Enums.RoleType.User } },
+        role: { connect: { id: Enums.RoleType.User } },
       },
       select: getOne,
     });
