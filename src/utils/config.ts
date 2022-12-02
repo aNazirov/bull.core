@@ -5,7 +5,7 @@ import { generateFilename } from '.';
 
 export const multerStorage = diskStorage({
   destination: function (req, file, cb) {
-    const directory = `/var/lib/core/uploads/${moment().format('DD-MM-YYYY')}`;
+    const directory = `/var/lib/bull/uploads/${moment().format('DD-MM-YYYY')}`;
 
     if (!existsSync(directory)) {
       mkdirSync(directory, { recursive: true });
