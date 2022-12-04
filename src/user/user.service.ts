@@ -153,7 +153,7 @@ export class UserService {
       data.avatar = { connect: { id: params.avatarId } };
     }
 
-    if (params.name.trim() && candidate.name !== params.name.trim()) {
+    if (params.name?.trim() && candidate.name !== params.name.trim()) {
       data.name = params.name.trim();
     }
 
@@ -165,9 +165,24 @@ export class UserService {
     }
 
     if (params.password) {
-      const equals = await bcrypt.compare(params.password, candidate.password);
+      if (params.oldPassword) {
+        const equals = await bcrypt.compare(
+          params.oldPassword,
+          candidate.password,
+        );
 
-      if (!equals) data.password = await bcrypt.hash(params.password, 12);
+        if (!equals)
+          return ErrorHandler(400, null, 'Старый пароль введен неверно');
+
+        data.password = await bcrypt.hash(params.password, 12);
+      } else {
+        const equals = await bcrypt.compare(
+          params.password,
+          candidate.password,
+        );
+
+        if (!equals) data.password = await bcrypt.hash(params.password, 12);
+      }
     }
 
     try {

@@ -31,6 +31,8 @@ export class UserController {
   }
 
   @Get()
+  @Roles(Enums.RoleType.Admin)
+  @UseGuards(RolesGuard)
   findAll(@JWTPayloadData() payload: JWTPayload, @Query('skip') skip?: string) {
     return this.userService.findAll(+skip, payload);
   }
@@ -41,6 +43,8 @@ export class UserController {
   }
 
   @Get(':id')
+  @Roles(Enums.RoleType.Admin)
+  @UseGuards(RolesGuard)
   findOne(@Param('id') id: string) {
     return this.userService.findOne(+id);
   }
