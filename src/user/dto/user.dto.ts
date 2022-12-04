@@ -28,6 +28,7 @@ export class CreateUserDto {
 }
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
+  @IsOptional()
   @IsString()
   oldPassword: string;
 }
