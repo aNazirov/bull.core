@@ -18,7 +18,6 @@ import { Enums, multerStorage } from 'src/utils';
 import { FileService } from './file.service';
 
 @Controller('file')
-@UseGuards(JwtAuthGuard)
 export class FileController {
   constructor(private readonly fileService: FileService) {}
 
@@ -28,8 +27,7 @@ export class FileController {
   }
 
   @Post('upload')
-  @Roles(Enums.RoleType.Admin)
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       storage: multerStorage,
@@ -40,8 +38,7 @@ export class FileController {
   }
 
   @Post('upload-many')
-  @Roles(Enums.RoleType.Admin)
-  @UseGuards(RolesGuard)
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FilesInterceptor('files', 10, {
       storage: multerStorage,

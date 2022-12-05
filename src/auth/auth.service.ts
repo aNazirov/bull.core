@@ -4,7 +4,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { appConfiguration } from 'config/config';
 import { User } from 'src/user/entities/user.entity';
-import { getOne } from 'src/user/user.service';
+import { getFull } from 'src/user/user.service';
 import { Enums, ErrorHandler } from 'src/utils';
 import { AuthenticatedUser, LoginDto, RegistrationDto } from './dto/auth.dto';
 
@@ -18,7 +18,7 @@ export class AuthService {
   async validateUser(params: LoginDto) {
     const user = await this.prisma.user.findFirst({
       where: { OR: [{ email: params.login }, { phone: params.login }] },
-      select: { ...getOne, password: true },
+      select: { ...getFull, password: true },
     });
 
     if (user == null) return null;
@@ -79,7 +79,7 @@ export class AuthService {
         password: await bcrypt.hash(params.password, 12),
         role: { connect: { id: Enums.RoleType.User } },
       },
-      select: getOne,
+      select: getFull,
     });
 
     const jwt = await this.getToken(user);

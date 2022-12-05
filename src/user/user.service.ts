@@ -8,7 +8,7 @@ import { ErrorHandler } from 'src/utils';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import { User } from './entities/user.entity';
 
-export const getOne = {
+export const getFull = {
   id: true,
   name: true,
   email: true,
@@ -65,7 +65,7 @@ export class UserService {
             ? { avatar: { connect: { id: params.avatarId } } }
             : {}),
         },
-        select: getOne,
+        select: getFull,
       });
 
       return user;
@@ -83,6 +83,7 @@ export class UserService {
             gt: payload.role.id,
           },
         },
+        select: getFull,
       }),
       this.prisma.user.count(),
     ]);
@@ -94,11 +95,34 @@ export class UserService {
   }
 
   async findByToken(id: number) {
-    return this.prisma.user.findUnique({ where: { id }, select: getOne });
+    return this.prisma.user.findUnique({ where: { id }, select: getFull });
+  }
+
+  async clicks(id: number) {
+    const [banners, chains, contexts] = await this.prisma.$transaction([
+      this.prisma.banner.aggregate({
+        where: { userId: id },
+        _sum: { clicked: true },
+      }),
+      this.prisma.chain.aggregate({
+        where: { userId: id },
+        _sum: { clicked: true },
+      }),
+      this.prisma.context.aggregate({
+        where: { userId: id },
+        _sum: { clicked: true },
+      }),
+    ]);
+
+    return {
+      banners: banners._sum.clicked || 0,
+      chains: chains._sum.clicked || 0,
+      contexts: contexts._sum.clicked || 0,
+    };
   }
 
   async findOne(id: number) {
-    return this.prisma.user.findUnique({ where: { id }, select: getOne });
+    return this.prisma.user.findUnique({ where: { id }, select: getFull });
   }
 
   async update(
@@ -189,7 +213,7 @@ export class UserService {
       const user = await this.prisma.user.update({
         where: { id: candidate.id },
         data,
-        select: getOne,
+        select: getFull,
       });
 
       if (user.avatar?.id && candidate.avatarId !== user.avatar?.id) {

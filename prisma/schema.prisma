@@ -135,8 +135,13 @@ model Context {
   user User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   type ContextType @relation(fields: [typeId], references: [id])
 
+  clicked   Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+
+
+  @@index(fields: [createdAt(sort: Asc)])
+  @@index(fields: [userId], type: Hash)
 }
 
 model ChainType {
@@ -149,7 +154,6 @@ model ChainType {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
-
 }
 
 model Chain {
@@ -164,8 +168,11 @@ model Chain {
   user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   type ChainType @relation(fields: [typeId], references: [id])
 
+  clicked   Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+
+  @@index(fields: [userId], type: Hash)
 }
 
 model BannerType {
@@ -197,9 +204,11 @@ model Banner {
   user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   poster File       @relation(fields: [posterId], references: [id])
 
-
+  clicked   Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+
+  @@index(fields: [userId], type: Hash)
 }
 
 model File {

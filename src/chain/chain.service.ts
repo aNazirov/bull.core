@@ -10,6 +10,12 @@ import {
   UpdateChainTypeDto,
 } from './dto/chain.dto';
 
+export const getFull = {
+  id: true,
+  title: true,
+  url: true,
+};
+
 @Injectable()
 export class ChainService {
   constructor(private readonly prisma: PrismaService) {}
@@ -31,22 +37,26 @@ export class ChainService {
     }
 
     try {
-      const chain = await this.prisma.chain.create({
-        data: {
-          url: params.url,
-          title: params.title,
-          type: { connect: { id: type.id } },
-          user: { connect: { id: user.id } },
-          activeAt: new Date(moment().add(params.days).format()),
-        },
-      });
-
-      this.prisma.user.update({
-        where: { id: user.id },
-        data: {
-          balance: user.balance - needToPay,
-        },
-      });
+      const [chain] = await this.prisma.$transaction([
+        this.prisma.chain.create({
+          data: {
+            url: params.url,
+            title: params.title,
+            type: { connect: { id: type.id } },
+            user: { connect: { id: user.id } },
+            activeAt: new Date(moment().add(params.days, 'days').format()),
+          },
+          select: getFull,
+        }),
+        this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            balance: {
+              decrement: needToPay,
+            },
+          },
+        }),
+      ]);
 
       return chain;
     } catch (e) {
@@ -91,16 +101,46 @@ export class ChainService {
     };
   }
 
-  async findAll(skip = 0) {
-    const [data, count] = await this.prisma.$transaction([
-      this.prisma.chain.findMany({ skip }),
-      this.prisma.chain.count(),
+  async findAll() {
+    const ids = await this.prisma.$queryRaw<
+      { id: number }[]
+    >`SELECT id FROM "Chain" ORDER BY random() LIMIT 8`;
+
+    const [data] = await this.prisma.$transaction([
+      this.prisma.chain.findMany({
+        where: { id: { in: ids.map((x) => x.id) } },
+        select: getFull,
+      }),
+      // this.prisma.chain.count(),
     ]);
 
     return {
-      count,
       data,
     };
+  }
+
+  async clicked(id: number) {
+    const candidate = await this.prisma.chain.findUnique({
+      where: { id },
+    });
+
+    if (!candidate) {
+      return ErrorHandler(400, null, 'Цепочка не найдена');
+    }
+
+    try {
+      const chain = await this.prisma.chain.update({
+        where: { id: candidate.id },
+        data: {
+          clicked: { increment: 1 },
+        },
+        select: getFull,
+      });
+
+      return chain;
+    } catch (e) {
+      return ErrorHandler(500, e);
+    }
   }
 
   async update(id: number, params: UpdateChainTypeDto) {

@@ -10,6 +10,13 @@ import {
   UpdateContextTypeDto,
 } from './dto/context.dto';
 
+export const getFull = {
+  id: true,
+  title: true,
+  description: true,
+  url: true,
+};
+
 @Injectable()
 export class ContextService {
   constructor(private readonly prisma: PrismaService) {}
@@ -31,23 +38,27 @@ export class ContextService {
     }
 
     try {
-      const chain = await this.prisma.context.create({
-        data: {
-          url: params.url,
-          title: params.title,
-          description: params.description,
-          type: { connect: { id: type.id } },
-          user: { connect: { id: user.id } },
-          activeAt: new Date(moment().add(params.days).format()),
-        },
-      });
-
-      this.prisma.user.update({
-        where: { id: user.id },
-        data: {
-          balance: user.balance - needToPay,
-        },
-      });
+      const chain = await this.prisma.$transaction([
+        this.prisma.context.create({
+          data: {
+            url: params.url,
+            title: params.title,
+            description: params.description,
+            type: { connect: { id: type.id } },
+            user: { connect: { id: user.id } },
+            activeAt: new Date(moment().add(params.days, 'days').format()),
+          },
+          select: getFull,
+        }),
+        this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            balance: {
+              decrement: needToPay,
+            },
+          },
+        }),
+      ]);
 
       return chain;
     } catch (e) {
@@ -83,16 +94,55 @@ export class ContextService {
     };
   }
 
-  async findAll(skip = 0) {
-    const [data, count] = await this.prisma.$transaction([
-      this.prisma.context.findMany({ skip }),
-      this.prisma.context.count(),
+  async findAll() {
+    const [urgents, lows] = await this.prisma.$transaction([
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Context" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "ContextType" WHERE "priority" = 'urgent') ORDER BY random() LIMIT 3`,
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Context" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "ContextType" WHERE "priority" = 'low') ORDER BY random() LIMIT 10`,
+    ]);
+
+    const [data] = await this.prisma.$transaction([
+      this.prisma.context.findMany({
+        where: { id: { in: [...urgents, ...lows].map((x) => x.id) } },
+        orderBy: {
+          type: {
+            priority: 'asc',
+          },
+        },
+        select: getFull,
+      }),
+      // this.prisma.context.count(),
     ]);
 
     return {
-      count,
       data,
     };
+  }
+
+  async clicked(id: number) {
+    const candidate = await this.prisma.context.findUnique({
+      where: { id },
+    });
+
+    if (!candidate) {
+      return ErrorHandler(400, null, 'Контекст не найден');
+    }
+
+    try {
+      const context = await this.prisma.context.update({
+        where: { id: candidate.id },
+        data: {
+          clicked: { increment: 1 },
+        },
+      });
+
+      return context;
+    } catch (e) {
+      return ErrorHandler(500, e);
+    }
   }
 
   async update(id: number, params: UpdateContextTypeDto) {

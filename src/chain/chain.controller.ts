@@ -39,7 +39,7 @@ export class ChainController {
 
   @Get('type')
   findAllType(@Query('skip') skip?: string) {
-    return this.chainService.findAllType(+skip);
+    return this.chainService.findAllType(+skip || 0);
   }
 
   @Get('type/active')
@@ -48,8 +48,13 @@ export class ChainController {
   }
 
   @Get()
-  findAll(@Query('skip') skip?: string) {
-    return this.chainService.findAll(+skip);
+  findAll() {
+    return this.chainService.findAll();
+  }
+
+  @Patch('clicked/:id')
+  clicked(@Param('id') id: string) {
+    return this.chainService.clicked(+id);
   }
 
   @Patch(':id')

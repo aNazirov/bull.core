@@ -10,6 +10,27 @@ import {
   UpdateBannerTypeDto,
 } from './dto/banner.dto';
 
+export const getFull = {
+  id: true,
+  url: true,
+  type: {
+    select: {
+      id: true,
+      name: true,
+      size: true,
+      index: true,
+      position: true,
+    },
+  },
+  poster: {
+    select: {
+      id: true,
+      name: true,
+      url: true,
+    },
+  },
+};
+
 @Injectable()
 export class BannerService {
   constructor(private readonly prisma: PrismaService) {}
@@ -31,22 +52,26 @@ export class BannerService {
     }
 
     try {
-      const banner = await this.prisma.banner.create({
-        data: {
-          url: params.url,
-          type: { connect: { id: type.id } },
-          user: { connect: { id: user.id } },
-          poster: { connect: { id: params.posterId } },
-          activeAt: new Date(moment().add(params.days).format()),
-        },
-      });
-
-      this.prisma.user.update({
-        where: { id: user.id },
-        data: {
-          balance: user.balance - needToPay,
-        },
-      });
+      const [banner] = await this.prisma.$transaction([
+        this.prisma.banner.create({
+          data: {
+            url: params.url,
+            type: { connect: { id: type.id } },
+            user: { connect: { id: user.id } },
+            poster: { connect: { id: params.posterId } },
+            activeAt: new Date(moment().add(params.days, 'days').format()),
+          },
+          select: getFull,
+        }),
+        this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            balance: {
+              decrement: needToPay,
+            },
+          },
+        }),
+      ]);
 
       return banner;
     } catch (e) {
@@ -132,16 +157,75 @@ export class BannerService {
     };
   }
 
-  async findAll(skip = 0) {
-    const [data, count] = await this.prisma.$transaction([
-      this.prisma.banner.findMany({ skip }),
-      this.prisma.banner.count(),
+  async findAll() {
+    const [
+      size_1600x200,
+      size_728x90,
+      size_1200x150,
+      size_160x600,
+      size_150x150,
+    ] = await this.prisma.$transaction([
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_1600x200' LIMIT 1) ORDER BY random() LIMIT 1`,
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_728x90' LIMIT 1) ORDER BY random() LIMIT 4`,
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_1200x150' LIMIT 1) ORDER BY random() LIMIT 1`,
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_160x600' LIMIT 1) ORDER BY random() LIMIT 2`,
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_150x150' LIMIT 1) ORDER BY random() LIMIT 2`,
+    ]);
+
+    const [data] = await this.prisma.$transaction([
+      this.prisma.banner.findMany({
+        where: {
+          id: {
+            in: [
+              ...size_1600x200,
+              ...size_728x90,
+              ...size_1200x150,
+              ...size_160x600,
+              ...size_150x150,
+            ].map((x) => x.id),
+          },
+        },
+        select: getFull,
+      }),
+      // this.prisma.banner.count(),
     ]);
 
     return {
-      count,
       data,
     };
+  }
+
+  async clicked(id: number) {
+    const candidate = await this.prisma.banner.findUnique({
+      where: { id },
+    });
+
+    if (!candidate) {
+      return ErrorHandler(400, null, 'Баннер не найден');
+    }
+
+    try {
+      const banner = await this.prisma.banner.update({
+        where: { id: candidate.id },
+        data: {
+          clicked: { increment: 1 },
+        },
+      });
+
+      return banner;
+    } catch (e) {
+      return ErrorHandler(500, e);
+    }
   }
 
   async update(id: number, params: UpdateBannerTypeDto) {

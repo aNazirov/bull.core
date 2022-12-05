@@ -34,12 +34,17 @@ export class UserController {
   @Roles(Enums.RoleType.Admin)
   @UseGuards(RolesGuard)
   findAll(@JWTPayloadData() payload: JWTPayload, @Query('skip') skip?: string) {
-    return this.userService.findAll(+skip, payload);
+    return this.userService.findAll(+skip || 0, payload);
   }
 
   @Get('token')
   findByToken(@JWTPayloadData() payload: JWTPayload) {
     return this.userService.findByToken(payload.userId);
+  }
+
+  @Get('clicks')
+  clicks(@JWTPayloadData() payload: JWTPayload) {
+    return this.userService.clicks(payload.userId);
   }
 
   @Get(':id')

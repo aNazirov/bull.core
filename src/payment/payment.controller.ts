@@ -40,7 +40,7 @@ export class PaymentController {
     @JWTPayloadData() payload: JWTPayload,
     @Query('params') params: string,
   ) {
-    return this.paymentService.findAll(+skip, payload, parse(params));
+    return this.paymentService.findAll(+skip || 0, payload, parse(params));
   }
 
   @Get(':id')

@@ -39,17 +39,22 @@ export class BannerController {
 
   @Get('type')
   findAllTypes(@Query('skip') skip?: string) {
-    return this.bannerService.findAllTypes(+skip);
+    return this.bannerService.findAllTypes(+skip || 0);
   }
 
   @Get('type/grouped')
   findGroupedTypes(@Query('skip') skip?: string) {
-    return this.bannerService.findGroupedTypes(+skip);
+    return this.bannerService.findGroupedTypes(+skip || 0);
   }
 
   @Get()
-  findAll(@Query('skip') skip?: string) {
-    return this.bannerService.findAll(+skip);
+  findAll() {
+    return this.bannerService.findAll();
+  }
+
+  @Patch('clicked/:id')
+  clicked(@Param('id') id: string) {
+    return this.bannerService.clicked(+id);
   }
 
   @Patch(':id')

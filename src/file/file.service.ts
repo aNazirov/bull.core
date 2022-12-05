@@ -36,7 +36,7 @@ export class FileService {
         originalName: file.originalname,
         size: file.size,
         mimeType: file.mimetype,
-        url: `/file/${file.filename}`,
+        url: `${this.config.get('fileServer')}/file/${file.filename}`,
         path: file.path,
       },
     });
@@ -50,7 +50,7 @@ export class FileService {
           originalName: x.originalname,
           size: x.size,
           mimeType: x.mimetype,
-          url: `${this.config.get('host')}/file/${x.filename}`,
+          url: `${this.config.get('fileServer')}/file/${x.filename}`,
           path: x.path,
         },
       });

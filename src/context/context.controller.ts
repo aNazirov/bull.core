@@ -39,12 +39,17 @@ export class ContextController {
 
   @Get('type')
   findAllType(@Query('skip') skip?: string) {
-    return this.contextService.findAllType(+skip);
+    return this.contextService.findAllType(+skip || 0);
   }
 
   @Get()
-  findAll(@Query('skip') skip?: string) {
-    return this.contextService.findAll(+skip);
+  findAll() {
+    return this.contextService.findAll();
+  }
+
+  @Patch('clicked/:id')
+  clicked(@Param('id') id: string) {
+    return this.contextService.clicked(+id);
   }
 
   @Patch(':id')
