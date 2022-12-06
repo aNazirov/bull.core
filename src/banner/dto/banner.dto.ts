@@ -1,5 +1,5 @@
 import { PartialType } from '@nestjs/mapped-types';
-import { BannerPosition, BannerSize } from '@prisma/client';
+import { BannerComponent, BannerPosition, BannerSize } from '@prisma/client';
 import { IsNumber, IsString, Max, Min } from 'class-validator';
 
 export class CreateBannerDto {
@@ -45,6 +45,16 @@ export class CreateBannerTypeDto {
     groups: [BannerPosition.full, BannerPosition.left, BannerPosition.right],
   })
   position: BannerPosition;
+
+  @IsString({
+    groups: [
+      BannerComponent.header,
+      BannerComponent.main,
+      BannerComponent.sidebar,
+      BannerComponent.footer,
+    ],
+  })
+  component: BannerComponent;
 }
 
 export class UpdateBannerTypeDto extends PartialType(CreateBannerTypeDto) {}

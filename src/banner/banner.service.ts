@@ -20,6 +20,7 @@ export const getFull = {
       size: true,
       index: true,
       position: true,
+      component: true,
     },
   },
   poster: {
@@ -100,6 +101,7 @@ export class BannerService {
           price: params.price,
           index: params.index,
           position: params.position,
+          component: params.component,
         },
       });
 
@@ -160,9 +162,13 @@ export class BannerService {
   async findAll() {
     const [
       size_1600x200,
-      size_728x90,
+      size_728x90_header,
+      size_728x90_main,
+      size_728x90_footer_left,
+      size_728x90_footer_right,
       size_1200x150,
-      size_160x600,
+      size_160x600_left,
+      size_160x600_right,
       size_150x150,
     ] = await this.prisma.$transaction([
       this.prisma.$queryRaw<
@@ -170,16 +176,31 @@ export class BannerService {
       >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_1600x200' LIMIT 1) ORDER BY random() LIMIT 1`,
       this.prisma.$queryRaw<
         { id: number }[]
-      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_728x90' LIMIT 1) ORDER BY random() LIMIT 4`,
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_728x90' AND "component" = 'header' LIMIT 1) ORDER BY random() LIMIT 1`,
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_728x90' AND "component" = 'main' LIMIT 1) ORDER BY random() LIMIT 1`,
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_728x90' AND "position" = 'left' LIMIT 1) ORDER BY random() LIMIT 1`,
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_728x90' AND "position" = 'right' LIMIT 1) ORDER BY random() LIMIT 1`,
       this.prisma.$queryRaw<
         { id: number }[]
       >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_1200x150' LIMIT 1) ORDER BY random() LIMIT 1`,
       this.prisma.$queryRaw<
         { id: number }[]
-      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_160x600' LIMIT 1) ORDER BY random() LIMIT 2`,
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_160x600' AND "position" = 'left' LIMIT 1) ORDER BY random() LIMIT 1`,
       this.prisma.$queryRaw<
         { id: number }[]
-      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_150x150' LIMIT 1) ORDER BY random() LIMIT 2`,
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_160x600' AND "position" = 'right' LIMIT 1) ORDER BY random() LIMIT 1`,
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_150x150' AND "position" = 'left' LIMIT 1) ORDER BY random() LIMIT 1`,
+      this.prisma.$queryRaw<
+        { id: number }[]
+      >`SELECT id FROM "Banner" WHERE "activeAt" >= NOW() AND "typeId" = (SELECT id FROM "BannerType" WHERE "size" = 'size_150x150' AND "position" = 'right' LIMIT 1) ORDER BY random() LIMIT 1`,
     ]);
 
     const [data] = await this.prisma.$transaction([
@@ -188,9 +209,13 @@ export class BannerService {
           id: {
             in: [
               ...size_1600x200,
-              ...size_728x90,
+              ...size_728x90_header,
+              ...size_728x90_main,
+              ...size_728x90_footer_left,
+              ...size_728x90_footer_right,
               ...size_1200x150,
-              ...size_160x600,
+              ...size_160x600_left,
+              ...size_160x600_right,
               ...size_150x150,
             ].map((x) => x.id),
           },
@@ -275,6 +300,10 @@ export class BannerService {
 
     if (params.position && candidate.position !== params.position) {
       data.position = params.position;
+    }
+
+    if (params.component && candidate.component !== params.component) {
+      data.component = params.component;
     }
 
     try {

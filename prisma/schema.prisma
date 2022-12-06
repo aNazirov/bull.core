@@ -10,6 +10,13 @@ generator client {
   provider = "prisma-client-js"
 }
 
+enum BannerComponent {
+  header
+  sidebar
+  main
+  footer
+}
+
 enum BannerPosition {
   full
   right
@@ -183,13 +190,16 @@ model BannerType {
   price Int
   index Int?
 
-  position BannerPosition
+  position  BannerPosition
+  component BannerComponent?
 
   ///@HideField()
   banners Banner[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
+
+  @@index([position, component])
 }
 
 model Banner {
@@ -210,6 +220,7 @@ model Banner {
   updatedAt DateTime @default(now()) @updatedAt
 
   @@index(fields: [userId], type: Hash)
+  @@index([activeAt, typeId])
 }
 
 model File {
