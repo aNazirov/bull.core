@@ -49,6 +49,7 @@ model User {
   banners  Banner[]
   payments Payment[]
 
+  deleted   Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
 

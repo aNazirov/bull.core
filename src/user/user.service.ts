@@ -27,6 +27,7 @@ export const getFull = {
     },
   },
   balance: true,
+  deleted: true,
 };
 
 @Injectable()
@@ -228,11 +229,10 @@ export class UserService {
 
   async remove(id: number) {
     try {
-      const user = await this.prisma.user.delete({ where: { id } });
-
-      if (user.avatarId) {
-        await this.file.delete({ id: user.avatarId });
-      }
+      await this.prisma.user.update({
+        where: { id },
+        data: { deleted: true },
+      });
 
       return { status: 200, message: 'Success' };
     } catch (e) {

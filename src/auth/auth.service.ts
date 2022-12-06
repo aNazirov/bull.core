@@ -17,11 +17,17 @@ export class AuthService {
 
   async validateUser(params: LoginDto) {
     const user = await this.prisma.user.findFirst({
-      where: { OR: [{ email: params.login }, { phone: params.login }] },
+      where: {
+        OR: [{ email: params.login }, { phone: params.login }],
+      },
       select: { ...getFull, password: true },
     });
 
     if (user == null) return null;
+
+    if (user.deleted) {
+      return ErrorHandler(403, null, 'Ваш профиль заблокирован');
+    }
 
     const password = user.password;
 

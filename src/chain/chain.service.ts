@@ -174,7 +174,7 @@ export class ChainService {
         data,
       });
 
-      if (data.active) {
+      if (chainType.active) {
         await this.prisma.chainType.updateMany({
           where: {
             id: { not: chainType.id },
