@@ -16,6 +16,7 @@ async function bootstrap() {
     '185.71.65.189',
     '149.202.17.210',
     'https://bull.anazirov.com',
+    'https://bull-metrics.vercel.app',
   ];
 
   if (MODE === 'DEV') {
@@ -24,12 +25,11 @@ async function bootstrap() {
 
   app.enableCors({
     origin: function (origin, callback) {
-      callback(null, true);
-      // if (whitelist.indexOf(origin) !== -1) {
-      //   callback(null, true);
-      // } else {
-      //   callback(new Error('Not allowed by CORS'));
-      // }
+      if (whitelist.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
     },
     allowedHeaders: '*',
     methods: '*',
