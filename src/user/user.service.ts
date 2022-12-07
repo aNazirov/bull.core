@@ -26,7 +26,7 @@ export const getFull = {
       url: true,
     },
   },
-  banner: {
+  banners: {
     select: {
       id: true,
       type: {
@@ -42,8 +42,8 @@ export const getFull = {
       clicked: true,
     },
   },
-  context: { select: { id: true, title: true, url: true, clicked: true } },
-  chain: { select: { id: true, title: true, url: true, clicked: true } },
+  contexts: { select: { id: true, title: true, url: true, clicked: true } },
+  chains: { select: { id: true, title: true, url: true, clicked: true } },
   balance: true,
   deleted: true,
 };
