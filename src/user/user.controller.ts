@@ -20,7 +20,6 @@ import { UserService } from './user.service';
 @Controller('user')
 @UseGuards(JwtAuthGuard)
 export class UserController {
-  chainService: any;
   constructor(private readonly userService: UserService) {}
 
   @Post()

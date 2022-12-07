@@ -26,6 +26,24 @@ export const getFull = {
       url: true,
     },
   },
+  banner: {
+    select: {
+      id: true,
+      type: {
+        select: {
+          id: true,
+          name: true,
+          size: true,
+          index: true,
+          position: true,
+          component: true,
+        },
+      },
+      clicked: true,
+    },
+  },
+  context: { select: { id: true, title: true, url: true, clicked: true } },
+  chain: { select: { id: true, title: true, url: true, clicked: true } },
   balance: true,
   deleted: true,
 };

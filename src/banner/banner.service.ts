@@ -169,7 +169,8 @@ export class BannerService {
       size_1200x150,
       size_160x600_left,
       size_160x600_right,
-      size_150x150,
+      size_150x150_left,
+      size_150x150_right,
     ] = await this.prisma.$transaction([
       this.prisma.$queryRaw<
         { id: number }[]
@@ -216,7 +217,8 @@ export class BannerService {
               ...size_1200x150,
               ...size_160x600_left,
               ...size_160x600_right,
-              ...size_150x150,
+              ...size_150x150_left,
+              ...size_150x150_right,
             ].map((x) => x.id),
           },
         },
